@@ -24,7 +24,7 @@ public class Main {
 	 NXTMMX.MMX_MOTOR_1);
 	 static MMXRegulatedMotor m2 = new MMXRegulatedMotor(multiplex,
 	 NXTMMX.MMX_MOTOR_2);
-	//
+
 	static NXTRegulatedMotor leftWheel = Motor.B;
 	static NXTRegulatedMotor rightWheel = Motor.C;
 	static NXTRegulatedMotor thresher = Motor.A;
