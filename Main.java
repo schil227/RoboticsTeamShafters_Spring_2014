@@ -1,6 +1,7 @@
 import java.io.File;
 import java.util.ArrayList;
 
+import lejos.nxt.Button;
 import lejos.nxt.LCDOutputStream;
 import lejos.nxt.Motor;
 import lejos.nxt.NXTRegulatedMotor;
@@ -17,8 +18,8 @@ import lejos.nxt.addon.NXTMMX;
 
 public class Main {
 	static NXTMMX multiplex = new NXTMMX(SensorPort.S2);
-	static UltrasonicSensor Us1 = new UltrasonicSensor(SensorPort.S4);
-	static UltrasonicSensor Us2 = new UltrasonicSensor(SensorPort.S3);
+	static UltrasonicSensor us1 = new UltrasonicSensor(SensorPort.S4);
+	static UltrasonicSensor us2 = new UltrasonicSensor(SensorPort.S3);
 
 	static MMXRegulatedMotor intake = new MMXRegulatedMotor(multiplex,
 			NXTMMX.MMX_MOTOR_1);
@@ -28,6 +29,8 @@ public class Main {
 	static NXTRegulatedMotor leftWheel = Motor.B;
 	static NXTRegulatedMotor rightWheel = Motor.A;
 	static NXTRegulatedMotor thrower = Motor.C;
+	
+	LCDOutputStream output = new LCDOutputStream();
 	
 	static int TURN_SPEED = 200;
 	static int TURN_TIME = 1500;
@@ -46,14 +49,24 @@ public class Main {
 //		goBackwards(500);
 //		Thread.sleep(1000);
 //		
-//		turnLeft();
+//		Thread.sleep(500);
+//		while(!Button.ENTER.isDown()){
+//		System.out.println("dist: " + us1.getDistance());
+//		Thread.sleep(250);
+//		}
+//		turnRight();
 //		Thread.sleep(1000);
 //		turnRight();
-		intake();
-		Thread.sleep(50);
-		lift();
-		Thread.sleep(100);
-		launch();
+//		intake();
+//		Thread.sleep(50);
+//		lift();
+//		Thread.sleep(50);
+//		launch();
+		
+		turnLeft();
+		Thread.sleep(1000);
+		turnRight();
+		
 	}
 
 	private static void goForward(int speed) {
@@ -71,20 +84,24 @@ public class Main {
 		rightWheel.backward();
 	}
 
-	private static void turnLeft() throws InterruptedException {
-		leftWheel.setSpeed(TURN_SPEED);
-		rightWheel.setSpeed(TURN_SPEED);
+	private static void turnRight() throws InterruptedException {
+		leftWheel.setSpeed(250);
+		rightWheel.setSpeed(250);
 		leftWheel.backward();
 		rightWheel.forward();
-		Thread.sleep(TURN_TIME);
+		Thread.sleep(1500);
+		leftWheel.stop();
+		rightWheel.stop();
 	}
 
-	private static void turnRight() throws InterruptedException {
-		leftWheel.setSpeed(TURN_SPEED);
-		rightWheel.setSpeed(TURN_SPEED);
+	private static void turnLeft() throws InterruptedException {
+		leftWheel.setSpeed(250);
+		rightWheel.setSpeed(250);
 		leftWheel.forward();
 		rightWheel.backward();
-		Thread.sleep(1750);
+		Thread.sleep(1500);
+		leftWheel.stop();
+		rightWheel.stop();
 		}
 	
 	private static void intake() throws InterruptedException {
@@ -112,7 +129,7 @@ public class Main {
 	}
 	
 	private static void launch() throws InterruptedException {
-		thrower.setSpeed(700);
+		thrower.setSpeed(1350);
 		thrower.forward();
 		Thread.sleep(125);
 		thrower.stop();
