@@ -37,23 +37,32 @@ public class Main {
 	static int TURN_SPEED = 200;
 	static int TURN_TIME = 1500;
 
+	static int[] shootPosn = { 52, 43 };
+	static int[] scanPosn = { 90, 75 };
+
 	public static void main(String[] args) throws InterruptedException {
 		launch();
-//		leftWheel.setAcceleration(leftWheel.getAcceleration()-50);
-//		rightWheel.setAcceleration(rightWheel.getAcceleration()-50);
+		// leftWheel.setAcceleration(leftWheel.getAcceleration()-50);
+		// rightWheel.setAcceleration(rightWheel.getAcceleration()-50);
 		// while(!Button.ENTER.isDown()){
-		goToPosition(52, 50);
-
+		// goToPosition(shootPosn[0], shootPosn[1]);
+		// Thread.sleep(250);
+		// goToPosition(scanPosn[0], scanPosn[1]);
+		findABall();
+		fetch();
 	}
 
 	private static void stopWheels() throws InterruptedException {
+		leftWheel.setSpeed(250);
+		rightWheel.setSpeed(150);
+		Thread.sleep(130);
 		leftWheel.stop();
 		rightWheel.stop();
-//		rightWheel.setSpeed(130);
-//		rightWheel.forward();
-//		Thread.sleep(500);
-//		rightWheel.stop();
-		
+		// rightWheel.setSpeed(130);
+		// rightWheel.forward();
+		// Thread.sleep(500);
+		// rightWheel.stop();
+
 	}
 
 	private static void goBackward(int speed) {
@@ -71,7 +80,8 @@ public class Main {
 		rightWheel.backward();
 	}
 
-	private static void turnRight(int extraSleepTime) throws InterruptedException {
+	private static void turnRight(int extraSleepTime)
+			throws InterruptedException {
 		leftWheel.setSpeed(250);
 		rightWheel.setSpeed(250);
 		leftWheel.backward();
@@ -81,7 +91,8 @@ public class Main {
 		rightWheel.stop();
 	}
 
-	private static void turnLeft(int extraSleepTime) throws InterruptedException {
+	private static void turnLeft(int extraSleepTime)
+			throws InterruptedException {
 		leftWheel.setSpeed(250);
 		rightWheel.setSpeed(250);
 		leftWheel.forward();
@@ -91,10 +102,49 @@ public class Main {
 		rightWheel.stop();
 	}
 
-	private static int getFrontSensorDistance(){
+	private static int getFrontSensorDistance() {
 		return frontSensor.getDistance() + 10;
 	}
+
+	private static void findABall() throws InterruptedException {
+		boolean foundBall = false;
+		boolean foundBallBehind = false;
+		turnRight(0);
+		int currentDistance = rightSensor.getDistance();
+		goForward(150);
+		while (frontSensor.getDistance() > 10 && !foundBall && !foundBallBehind) {
+			int distance = rightSensor.getDistance();
+			System.out.println(distance);
+			if (distance < currentDistance - 5) {
+				foundBall = true;
+				Sound.beep();
+			} else if (distance > currentDistance + 2) {
+				foundBallBehind = true;
+				Sound.beep();
+//			} else {
+//				currentDistance = distance;
+			}
+		}
+	}
 	
+	private static void fetch() throws InterruptedException {
+		int distanceFromBall = rightSensor.getDistance();
+		turnLeft(0);
+		goBackward(150);
+		intake();
+		boolean thing = true;
+		while (thing) {
+			if (ts.isPressed()) {
+				thing = false;
+			}
+		}
+		elevator.setSpeed(500);
+		elevator.backward();
+		Thread.sleep(1500);
+		elevator.setSpeed(0);
+		elevator.backward();
+	}
+
 	private static void goToPosition(int destXCoord, int destYCoord)
 			throws InterruptedException {
 		int currentXCoord = rightSensor.getDistance();
@@ -105,35 +155,32 @@ public class Main {
 		boolean goUpY = yDistance < 0;
 		int moveSpeed = 360;
 		double distanceRate = 15.0;
-		if ( Math.abs(xDistance) < 5 && Math.abs(yDistance) < 5) {
+		if (Math.abs(xDistance) < 5 && Math.abs(yDistance) < 5) {
 
 		} else {
 			if (goRightX == true) {
 				turnRight(0);
 				goForward(moveSpeed);
 				Thread.sleep((long) (((Math.abs(xDistance) / distanceRate) * 1000)));
-				// Thread.sleep((long) 500);
 				stopWheels();
 				turnLeft(-100);
 			} else {
 				turnLeft(25);
 				goForward(moveSpeed);
 				Thread.sleep((long) ((Math.abs(xDistance) / distanceRate) * 1000));
-				// Thread.sleep((long) 500);
 				stopWheels();
 				turnRight(-75);
 			}
 			if (goUpY == true) {
-				goForward(moveSpeed); // 24 degrees/cm, 360 degrees for one second
-								// goes 15
-								// cm, 15cm/sec
+				goForward(moveSpeed); // 24 degrees/cm, 360 degrees for one
+										// second
+				// goes 15
+				// cm, 15cm/sec
 				Thread.sleep((long) (((Math.abs(yDistance) / distanceRate) * 1000)));
-				// Thread.sleep((long) 500);
 				stopWheels();
 			} else {
 				goBackward(moveSpeed);
 				Thread.sleep((long) ((Math.abs(yDistance) / distanceRate) * 1000));
-				// Thread.sleep((long) 500);
 				stopWheels();
 			}
 		}
