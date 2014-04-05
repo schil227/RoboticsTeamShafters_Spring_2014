@@ -45,11 +45,18 @@ public class Main {
 		// leftWheel.setAcceleration(leftWheel.getAcceleration()-50);
 		// rightWheel.setAcceleration(rightWheel.getAcceleration()-50);
 		// while(!Button.ENTER.isDown()){
-		// goToPosition(shootPosn[0], shootPosn[1]);
-		// Thread.sleep(250);
-		// goToPosition(scanPosn[0], scanPosn[1]);
-		findABall();
-		fetch();
+		//goToPosition(shootPosn[0], shootPosn[1]);
+		//Thread.sleep(250);
+		//goToPosition(scanPosn[0], scanPosn[1]);
+		//boolean successful = findABall();
+		//if (successful) {
+		//  fetch();
+		//  goToHoop();
+		//} else {
+		//	turnLeft(0);
+		//	goToPosition(scanPosn[0], scanPosn[1]);
+		//}
+		straightenOut();
 	}
 
 	private static void stopWheels() throws InterruptedException {
@@ -58,11 +65,6 @@ public class Main {
 		Thread.sleep(130);
 		leftWheel.stop();
 		rightWheel.stop();
-		// rightWheel.setSpeed(130);
-		// rightWheel.forward();
-		// Thread.sleep(500);
-		// rightWheel.stop();
-
 	}
 
 	private static void goBackward(int speed) {
@@ -105,8 +107,19 @@ public class Main {
 	private static int getFrontSensorDistance() {
 		return frontSensor.getDistance() + 10;
 	}
+	
+	private static void straightenOut() throws InterruptedException {
+		long time = (long) (((getFrontSensorDistance() / 7.5) * 1000));
+		goForward(180);
+		Thread.sleep(time);
+		goForward(0);
+		Thread.sleep(50);
+		goBackward(180);
+		Thread.sleep(time);
+		goBackward(0);
+	}
 
-	private static void findABall() throws InterruptedException {
+	private static boolean findABall() throws InterruptedException {
 		boolean foundBall = false;
 		boolean foundBallBehind = false;
 		turnRight(0);
@@ -125,28 +138,50 @@ public class Main {
 //				currentDistance = distance;
 			}
 		}
+		return foundBall;
 	}
 	
 	private static void fetch() throws InterruptedException {
-		int distanceFromBall = rightSensor.getDistance();
-		turnLeft(0);
-		goBackward(150);
-		intake();
+		turnLeft(100);
+		goBackward(125);
+		intake.setSpeed(500);
+		elevator.setSpeed(500);
+		intake.backward();
+		elevator.backward();
 		boolean thing = true;
 		while (thing) {
 			if (ts.isPressed()) {
 				thing = false;
+				Sound.beep();
 			}
 		}
-		elevator.setSpeed(500);
-		elevator.backward();
-		Thread.sleep(1500);
+		stopWheels();
+		intake.setSpeed(0);
 		elevator.setSpeed(0);
+		intake.backward();
+		elevator.backward();
+		intake.setSpeed(500);
+		elevator.setSpeed(500);
+		intake.backward();
+		elevator.backward();
+		Thread.sleep(2000);
+		intake.setSpeed(0);
+		elevator.setSpeed(0);
+		intake.backward();
 		elevator.backward();
 	}
+	
+	private static void goToHoop() throws InterruptedException {
+		goForward(250);
+		Thread.sleep(2000);
+		stopWheels();
+		goToPosition(shootPosn[0], shootPosn[1]);
+		straightenOut();
+		lift();
+		launch();
+	}
 
-	private static void goToPosition(int destXCoord, int destYCoord)
-			throws InterruptedException {
+	private static void goToPosition(int destXCoord, int destYCoord) throws InterruptedException {
 		int currentXCoord = rightSensor.getDistance();
 		int currentYCoord = getFrontSensorDistance();
 		double xDistance = destXCoord - currentXCoord;
@@ -176,7 +211,7 @@ public class Main {
 										// second
 				// goes 15
 				// cm, 15cm/sec
-				Thread.sleep((long) (((Math.abs(yDistance) / distanceRate) * 1000)));
+				Thread.sleep((long) (((Math.abs(yDistance) / distanceRate) * 1000) - 500));
 				stopWheels();
 			} else {
 				goBackward(moveSpeed);
