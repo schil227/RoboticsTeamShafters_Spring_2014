@@ -36,41 +36,47 @@ public class Main {
 
 	static int TURN_SPEED = 200;
 	static int TURN_TIME = 1500;
-	static int TURN_RIGHT = -75;
+	static int TURN_RIGHT = 0;
 	static int TURN_RIGHT_UP = 25;
 	static int TURN_LEFT = 0;
-	static int TURN_LEFT_UP = -75;
+	static int TURN_LEFT_UP = 50;
 	static int ARENA_LENGTH = 106;
 
-	static int[] shootPosn = { 52, 43 };
+	static int[] shootPosn = { 52, 38 }; // 40
 	static int[] scanPosn = { 90, 75 };
+	static boolean justShot = false;
 
 	public static void main(String[] args) throws InterruptedException {
 		Thread.sleep(250);
-		goToPosition(rightSensor.getDistance(), shootPosn[1]);
+		goToPosition(rightSensor.getDistance(), shootPosn[1], true);
 		elevator.setSpeed(500);
 		elevator.backward();
 		Thread.sleep(2000);
 		elevator.stop();
 		launch();
-		Thread.sleep(300);
+		justShot = true;
+		Thread.sleep(400);
 		while (!Button.ENTER.isDown()) {
-			goToPosition(scanPosn[0], scanPosn[1]);
+			goToPosition(scanPosn[0], scanPosn[1], false);
 			boolean successful = findABall();
 			if (successful) {
-				if(fetch()){
+				if (fetch()) {
 					goToHoop();
-				}else{
+					// straightenOut();
+					justShot = true;
+				} else {
 					goForward(350);
 					Thread.sleep(1500);
 				}
 			} else {
+				goBackward(500);
+				Thread.sleep(500);
 				turnLeft(TURN_LEFT_UP);
 			}
 		}
-//		while (!Button.ENTER.isDown()) {
-//			turnRight(0);
-//		}
+		// while (!Button.ENTER.isDown()) {
+		// turnRight(0);
+		// }
 
 	}
 
@@ -124,14 +130,17 @@ public class Main {
 	}
 
 	private static void straightenOut() throws InterruptedException {
-		long time = (long) (((getFrontSensorDistance() / 7.5) * 1000));
-		goForward(180);
-		Thread.sleep(time);
-		goForward(0);
+		long time = (long) (((getFrontSensorDistance() / 15.0) * 1000));
+		goForward(315);
+		Thread.sleep(time - 600);
+		stopWheels();
+		leftWheel.flt();
+		rightWheel.flt();
 		Thread.sleep(50);
-		goBackward(180);
+		goBackward(200);
 		Thread.sleep(time);
 		goBackward(0);
+		Thread.sleep(250);
 	}
 
 	private static boolean findABall() throws InterruptedException {
@@ -141,18 +150,23 @@ public class Main {
 									// variable
 		int currentDistance = rightSensor.getDistance();
 		goForward(200);
-		while (frontSensor.getDistance() > 10 && !foundBall && !foundBallBehind) {
+		while (frontSensor.getDistance() > 10 && !foundBall) {
 			int distance = rightSensor.getDistance();
 			System.out.println(distance);
 			if (distance < currentDistance - 4) {
 				foundBall = true;
+				Thread.sleep(100);
 				Sound.beep();
 			} else if (distance > currentDistance + 4) {
-				foundBall = true;
-				goBackward(200);
-				Thread.sleep(500);
-				stopWheels();
-				Sound.beep();
+				if (!foundBallBehind) {
+					currentDistance = distance;
+					foundBallBehind = true;
+				}
+				// foundBall = true;
+				// goBackward(200);
+				// Thread.sleep(500);
+				// stopWheels();
+				// Sound.beep();
 				// } else {
 				// currentDistance = distance;
 			}
@@ -180,14 +194,14 @@ public class Main {
 		intake.setSpeed(0);
 		elevator.setSpeed(0);
 		if (!thing) {
-			
+
 			intake.backward();
 			elevator.backward();
 			intake.setSpeed(500);
 			elevator.setSpeed(500);
 			intake.backward();
 			elevator.backward();
-			Thread.sleep(2000);
+			Thread.sleep(3000);
 			intake.setSpeed(0);
 			elevator.setSpeed(0);
 			intake.backward();
@@ -195,12 +209,12 @@ public class Main {
 			// back into wall to correct
 			Sound.beep();
 
-			goBackward(150);
-			Thread.sleep(200);
+			goBackward(210);
+			Thread.sleep(180);
 			Sound.beep();
 			stopWheels();
 			return true;
-		}else{
+		} else {
 			return false;
 		}
 
@@ -210,20 +224,28 @@ public class Main {
 		goForward(350);
 		Thread.sleep(2000);
 		stopWheels();
-		goToPosition(shootPosn[0], shootPosn[1]);
+		goToPosition(shootPosn[0], shootPosn[1], true);
 		liftAndLaunch();
 	}
 
-	private static void goToPosition(int destXCoord, int destYCoord)
-			throws InterruptedException {
+	private static void goToPosition(int destXCoord, int destYCoord,
+			boolean goingToHoop) throws InterruptedException {
 		int currentXCoord = rightSensor.getDistance();
+		if ((currentXCoord > 100 || currentXCoord < 15) && !goingToHoop) {
+			Sound.beep(); // when the ball rolls infront of the hoop
+			currentXCoord = 50;
+		}
 		int currentYCoord = getFrontSensorDistance();
+		if ((currentYCoord > 100 || currentYCoord < 15) && !goingToHoop) {
+			Sound.beep();
+			currentYCoord = 40;
+		}
 		double xDistance = destXCoord - currentXCoord;
 		double yDistance = destYCoord - currentYCoord;
 		boolean goRightX = xDistance < 0;
 		boolean goUpY = yDistance < 0;
-		int moveSpeed = 360;
-		double distanceRate = 15.0;
+		int moveSpeed = 720; //
+		double distanceRate = 28; // 15.0
 		if (Math.abs(xDistance) < 5 && Math.abs(yDistance) < 5) {
 
 		}
@@ -239,6 +261,10 @@ public class Main {
 				goForward(moveSpeed);
 				Thread.sleep((long) ((Math.abs(xDistance) / distanceRate) * 1000));
 				stopWheels();
+				if (!goingToHoop && justShot == true) {
+					straightenOut();
+					justShot = false;
+				}
 				turnRight(TURN_RIGHT_UP);
 			}
 		}
@@ -315,10 +341,9 @@ public class Main {
 		thrower.backward();
 		Thread.sleep(125);
 		thrower.stop();
-		Thread.sleep(300);
+		Thread.sleep(400);
 
 	}
-
 
 	private static void launch() throws InterruptedException {
 		thrower.setSpeed(1350);
